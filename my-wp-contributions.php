@@ -20,7 +20,7 @@
  * Define the My WP Stats Post ID
  * Change these settings
 */
-define( 'MY_WP_CONTRIBUTIONS_POST_ID', 771 );
+define( 'MY_WP_CONTRIBUTIONS_POST_ID', 8 );
 define( 'MY_WP_CONTRIBUTIONS_USERNAME', 'xkon' );
 
 function my_wp_contributions_activation() {
@@ -38,8 +38,10 @@ function my_wp_contributions_deactivation() {
 register_deactivation_hook( __FILE__, 'my_wp_contributions_deactivation' );
 
 function my_wp_contributions_show_contributions() {
-	require_once( dirname( __FILE__ ) . '/simple_html_dom.php' );
-	$output = 'WordPress.org Username: <a href="https://profiles.wordpress.org/' . MY_WP_CONTRIBUTIONS_USERNAME . '">'. MY_WP_CONTRIBUTIONS_USERNAME . '</a><br/>';
+
+	require_once( dirname( __FILE__ ) . '/inc/simple_html_dom.php' );
+
+	$output = 'WordPress.org Username: <a href="https://profiles.wordpress.org/' . MY_WP_CONTRIBUTIONS_USERNAME . '">' . MY_WP_CONTRIBUTIONS_USERNAME . '</a><br/>';
 
 	// General
 	$curl = curl_init();
@@ -49,8 +51,8 @@ function my_wp_contributions_show_contributions() {
 	$str = curl_exec( $curl );
 	curl_close( $curl );
 
-	$html = str_get_html( $str );
-	$forum_role = $html->find( 'p[class=bbp-user-forum-role]' );
+	$html          = str_get_html( $str );
+	$forum_role    = $html->find( 'p[class=bbp-user-forum-role]' );
 	$forum_replies = $html->find( 'p[class=bbp-user-reply-count]' );
 
 	$output .= $forum_role[0]->innertext . '<br>';
@@ -99,8 +101,8 @@ function my_wp_contributions_show_contributions() {
 	$meta_commits = count( $mt );
 
 	$totalmeta = $plugin_commits + $meta_commits;
-	$output .= '</br>';
-	$output .= 'Meta commits: ' . $totalmeta;
+	$output   .= '</br>';
+	$output   .= 'Meta commits: ' . $totalmeta;
 
 	// Core Tickets
 	$output .= '<h3>Open Core tickets that I\'m participating</h3>';
@@ -148,7 +150,7 @@ function my_wp_contributions_show_contributions() {
 
 	wp_update_post(
 		array(
-			'ID' => MY_WP_CONTRIBUTIONS_POST_ID,
+			'ID'           => MY_WP_CONTRIBUTIONS_POST_ID,
 			'post_content' => $output,
 		)
 	);
@@ -156,21 +158,31 @@ function my_wp_contributions_show_contributions() {
 }
 
 function my_wp_contributions_js() {
-	if ( is_page( 'wp-contributions' ) ) {
-		echo '<script>
-				(function($){
-					$("td:empty").remove();
-					$("a[href*=\'ticket\']").each(function() {
-						if ($(this).parent().parent().parent().parent().hasClass(\'core-tickets\')) {
-							var newRef = \'https://core.trac.wordpress.org\' + $(this).attr(\'href\');
-							$(this).attr(\'href\', newRef);
-						} else if ($(this).parent().parent().parent().parent().hasClass(\'meta-tickets\')) {
-							var newRef = \'https://meta.trac.wordpress.org\' + $(this).attr(\'href\');
-							$(this).attr(\'href\', newRef);
-						}
-					});
-				})(jQuery)
-				</script>';
+	if ( is_page( MY_WP_CONTRIBUTIONS_POST_ID ) ) {
+		?>
+		<script>
+				(function( $ ) {
+					$( document ).ready( function(){
+
+						$( 'td:empty' ).each( function() {
+							$( this ).remove();
+						} );
+
+						$( 'a[href*="ticket"]' ).each(function() {
+							if ($(this).parent().parent().parent().parent().hasClass('core-tickets')) {
+								var newRef = 'https://core.trac.wordpress.org' + $( this ).attr( 'href' );
+								$( this ).attr( 'href', newRef );
+							} else if ( $( this ).parent().parent().parent().parent().hasClass( 'meta-tickets' ) ) {
+								var newRef = 'https://meta.trac.wordpress.org' + $(this).attr( 'href' );
+								$( this ).attr( 'href', newRef);
+							}
+						} );
+
+					} );
+
+				})( jQuery )
+		</script>
+		<?php
 	}
 }
 add_action( 'wp_footer', 'my_wp_contributions_js', 100 );
