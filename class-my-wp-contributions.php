@@ -24,7 +24,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Change these settings to define your post ID and WordPress.org username.
 */
 define( 'MY_WP_CONTRIBUTIONS_POST_ID', 8 );
-define( 'MY_WP_CONTRIBUTIONS_USERNAME', 'xkon' );
 
 
 /**
@@ -55,8 +54,25 @@ class MY_WP_CONTRIBUTIONS {
 	public function init() {
 		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
+		add_action( 'admin_menu', array( $this, 'create_admin_menu' ) );
+		add_action( 'admin_init', array( $this, 'create_options' ) );
 		add_action( 'my_wp_contributions_event', array( $this, 'my_wp_contributions_show_contributions' ) );
 		add_action( 'wp_footer', array( $this, 'my_wp_contributions_js' ), 100 );
+		register_setting( 'mywpcontributions', 'mywpcontributions_options' );
+		add_action( 'wp_ajax_my_wp_contributions_regenerate', array( $this, 'regenerate' ) );
+
+	}
+
+	/**
+	 * Regenerate function.
+	 *
+	 * @return void
+	 */
+	public function regenerate() {
+
+		MY_WP_CONTRIBUTIONS::my_wp_contributions_show_contributions();
+		$response = 'success';
+		wp_send_json_success( $response );
 
 	}
 
@@ -90,6 +106,261 @@ class MY_WP_CONTRIBUTIONS {
 	}
 
 	/**
+ * Create Admin menu.
+ *
+ * @uses add_menu_page()
+ *
+ * @return void
+ */
+	public function create_admin_menu() {
+
+		add_options_page(
+			'My WP Contributions Settings',
+			'My WP Contributions',
+			'manage_options',
+			'my-wp-contributions',
+			array( $this, 'create_my_wp_contributions_page' )
+		);
+
+	}
+
+	public function create_options() {
+
+		add_option( 'mywpcontributions_general_title', '<p><strong>Currently participating in:</strong></p>' );
+		add_option( 'mywpcontributions_core_commits_title', '<p>Core Commits:</p>' );
+		add_option( 'mywpcontributions_meta_commits_title', '<p>Meta Commits:</p>' );
+		add_option( 'mywpcontributions_show_core', 'Yes' );
+		add_option( 'mywpcontributions_show_meta', 'Yes' );
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_username',
+			array( $this, 'text_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_before',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_after',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_styles',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_general_title',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_core_commits_title',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_meta_commits_title',
+			array( $this, 'html_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_show_core',
+			array( $this, 'select_sanitize' )
+		);
+
+		register_setting(
+			'mywpcontributions_options_group',
+			'mywpcontributions_show_meta',
+			array( $this, 'select_sanitize' )
+		);
+
+	}
+
+	/**
+	* Sanitize text setting field as needed.
+	*
+	* @param array $input Contains the text string.
+	*
+	* @uses sanitize_text_field()
+	*
+	* @return string $new_input Sanitized text setting.
+	*/
+	public function text_sanitize( $input ) {
+
+		if ( isset( $input ) ) {
+			$new_input = sanitize_text_field( $input );
+		}
+
+		return $new_input;
+
+	}
+
+	/**
+	* Sanitize textarea setting field as needed.
+	*
+	* @param array $input Contains the textarea string.
+	*
+	* @uses wp_kses_post()
+	*
+	* @return string $new_input Sanitized textarea string.
+	*/
+	public function html_sanitize( $input ) {
+
+		if ( isset( $input ) ) {
+			$new_input = wp_kses_post( $input );
+		}
+
+		return $new_input;
+
+	}
+
+	/**
+	* Sanitize select setting field as needed.
+	*
+	* @param array $input Contains the select string.
+	*
+	*
+	* @return string $new_input Sanitized select string.
+	*/
+	public function select_sanitize( $input ) {
+
+		if ( 'Yes' === $input || 'No' === $input ) {
+			$new_input = $input;
+		} else {
+			$new_input = 'Yes';
+		}
+
+		return $new_input;
+
+	}
+
+	/**
+	 * Create Admin Page.
+	 *
+	 * @uses settings_fields()
+	 * @uses get_option()
+	 * @uses submit_button()
+	 *
+	 * @return void
+	 */
+	public function create_my_wp_contributions_page() {
+		?>
+		<div class="wrap">
+			<h1>My WP Contributions</h1>
+			<form method="post" action="options.php">
+			<?php settings_fields( 'mywpcontributions_options_group' ); ?>
+				<table class="widefat">
+					<tr>
+						<td>
+							<h3>WordPress.org Username</h3>
+							<input type="text" id="mywpcontributions_username" name="mywpcontributions_username" value="<?php echo get_option( 'mywpcontributions_username' ); ?>" />
+							<h3>General Title (html)</h3>
+							<input type="text" id="mywpcontributions_general_title" name="mywpcontributions_general_title" value="<?php echo get_option( 'mywpcontributions_general_title' ); ?>" />
+						</td>
+						<td>
+							<h3>Core Commits Title (html)</h3>
+							<input type="text" id="mywpcontributions_core_commits_title" name="mywpcontributions_core_commits_title" value="<?php echo get_option( 'mywpcontributions_core_commits_title' ); ?>" />
+							<h3>Meta Commits Title (html)</h3>
+							<input type="text" id="mywpcontributions_meta_commits_title" name="mywpcontributions_meta_commits_title" value="<?php echo get_option( 'mywpcontributions_meta_commits_title' ); ?>" />
+							</td>
+						<td>
+							<h3>Show Core Commits</h3>
+							<select name="mywpcontributions_show_core" id="mywpcontributions_show_core">
+								<?php
+								if ( 'Yes' === get_option( 'mywpcontributions_show_core' ) ) {
+									echo '<option value="Yes" selected="selected">Yes</option><option values="No">No</option>';
+								} else {
+									echo '<option value="Yes">Yes</option><option values="No" selected="selected">No</option>';
+								}
+								?>
+							</select>
+						<h3>Show Meta Commits</h3>
+							<select name="mywpcontributions_show_meta" id="mywpcontributions_show_meta">
+								<?php
+								if ( 'Yes' === get_option( 'mywpcontributions_show_meta' ) ) {
+									echo '<option value="Yes" selected="selected">Yes</option><option values="No">No</option>';
+								} else {
+									echo '<option value="Yes">Yes</option><option values="No" selected="selected">No</option>';
+								}
+								?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<h3>Before output (html)</h3>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_before" name="mywpcontributions_before"><?php echo get_option( 'mywpcontributions_before' ); ?></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<h3>After output (html)</h3>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_after" name="mywpcontributions_after"><?php echo get_option( 'mywpcontributions_after' ); ?></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<h3>Extra CSS rules (mark everything with !important)</h3>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_styles" name="mywpcontributions_styles"><?php echo get_option( 'mywpcontributions_styles' ); ?></textarea>
+						</td>
+					</tr>
+					<tr>
+			</table>
+				<?php submit_button(); ?>
+			</form>
+			<p id="wait"></p>
+			<input type="button" id="my-wp-contributions-regenerate" class="button button-primary" value="Regenerate Page">
+		</div>
+		<style>
+			table.widefat {
+				background: transparent;
+				border: 0;
+				box-shadow: none;
+			}
+			table.widefat td input {
+				width: 100%;
+			}
+			@media (max-width:860px){
+				table.widefat td {
+					display: block;
+					clear: both;
+				}
+			}
+		</style>
+		<script>
+		(function($){
+			$( document ).ready( function() {
+				var regenerate = $( '#my-wp-contributions-regenerate' );
+				var regenerateData = { 'action': 'my_wp_contributions_regenerate' };
+				regenerate.on( 'click', function() {
+					$( regenerate ).prop( 'disabled', true );
+					$('#wait').html('Please wait.');
+					$.post( ajaxurl, regenerateData, function( response ) {
+						if ( 'success' === response.data ) {
+							$( regenerate ).prop( 'disabled', false );
+							$('#wait').html('Page refreshed.');
+						}
+					} );
+				} );
+			});
+		})(jQuery)
+		</script>
+	<?php
+	}
+
+	/**
 	 * Gather and display stats.
 	 *
 	 * @uses wp_remote_get()
@@ -101,95 +372,133 @@ class MY_WP_CONTRIBUTIONS {
 	 * @return void
 	 */
 	public function my_wp_contributions_show_contributions() {
+		$username           = get_option( 'mywpcontributions_username' );
+		$before             = get_option( 'mywpcontributions_before' );
+		$after              = get_option( 'mywpcontributions_after' );
+		$styles             = get_option( 'mywpcontributions_styles' );
+		$general_title      = get_option( 'mywpcontributions_general_title' );
+		$core_commits_title = get_option( 'mywpcontributions_core_commits_title' );
+		$meta_commits_title = get_option( 'mywpcontributions_meta_commits_title' );
+		$show_core          = get_option( 'mywpcontributions_show_core' );
+		$show_meta          = get_option( 'mywpcontributions_show_meta' );
 
-		require_once( dirname( __FILE__ ) . '/inc/simple_html_dom.php' );
+		if ( ! empty( $username ) ) {
 
-		$output = 'WordPress.org Username: <a href="https://profiles.wordpress.org/' . MY_WP_CONTRIBUTIONS_USERNAME . '">' . MY_WP_CONTRIBUTIONS_USERNAME . '</a><br/>';
+			require_once( dirname( __FILE__ ) . '/inc/simple_html_dom.php' );
 
-		// General
+			$output = $before;
 
-		// Setup API Call.
-		$get_general  = wp_remote_get( 'https://wordpress.org/support/users/' . MY_WP_CONTRIBUTIONS_USERNAME );
-		$general_body = wp_remote_retrieve_body( $get_general );
+			$output .= '<p class="general-info">';
 
-		$html          = str_get_html( $general_body );
-		$forum_role    = $html->find( 'p[class=bbp-user-forum-role]' );
-		$forum_replies = $html->find( 'p[class=bbp-user-reply-count]' );
+			$output .= 'WordPress.org Username: <a href="https://profiles.wordpress.org/' . $username . '">' . $username . '</a><br/>';
 
-		$output .= $forum_role[0]->innertext . '<br>';
-		$output .= 'Forum ' . $forum_replies[0]->innertext . '<br>';
+			// General
 
-		// core commits
+			// Setup API Call.
+			$get_general  = wp_remote_get( 'https://wordpress.org/support/users/' . $username );
+			$general_body = wp_remote_retrieve_body( $get_general );
 
-		$get_remote      = wp_remote_get( 'https://core.trac.wordpress.org/search?q=props+' . MY_WP_CONTRIBUTIONS_USERNAME . '&noquickjump=1&changeset=on' );
-		$get_remote_body = wp_remote_retrieve_body( $get_remote );
+			$html          = str_get_html( $general_body );
+			$forum_role    = $html->find( 'p[class=bbp-user-forum-role]' );
+			$forum_replies = $html->find( 'p[class=bbp-user-reply-count]' );
 
-		$html = str_get_html( $get_remote_body );
+			$output .= $forum_role[0]->innertext . '<br>';
+			$output .= 'Forum ' . $forum_replies[0]->innertext . '<br>';
 
-		$mt = $html->find( 'dl[id=results] dt' );
+			if ( 'Yes' === $show_core ) {
+				// core commits
+				$get_remote      = wp_remote_get( 'https://core.trac.wordpress.org/search?q=props+' . $username . '&noquickjump=1&changeset=on' );
+				$get_remote_body = wp_remote_retrieve_body( $get_remote );
 
-		$output .= 'Core commits: ' . count( $mt ) . '<br>';
+				$html = str_get_html( $get_remote_body );
 
-		// plugins commits
+				$mt = $html->find( 'dl[id=results] dt' );
 
-		$get_remote      = wp_remote_get( 'https://plugins.trac.wordpress.org/search?q=props+' . MY_WP_CONTRIBUTIONS_USERNAME . '&noquickjump=1&changeset=on' );
-		$get_remote_body = wp_remote_retrieve_body( $get_remote );
+				$output .= 'Core commits: ' . count( $mt ) . '<br>';
+			}
 
-		$html = str_get_html( $get_remote_body );
+			if ( 'Yes' === $show_meta ) {
+				// plugins commits
 
-		$mt = $html->find( 'dl[id=results] dt' );
+				$get_remote      = wp_remote_get( 'https://plugins.trac.wordpress.org/search?q=props+' . $username . '&noquickjump=1&changeset=on' );
+				$get_remote_body = wp_remote_retrieve_body( $get_remote );
 
-		$plugin_commits = count( $mt );
+				$html = str_get_html( $get_remote_body );
 
-		// meta commits
+				$mt = $html->find( 'dl[id=results] dt' );
 
-		$get_remote      = wp_remote_get( 'https://meta.trac.wordpress.org/search?q=props+' . MY_WP_CONTRIBUTIONS_USERNAME . '&noquickjump=1&changeset=on' );
-		$get_remote_body = wp_remote_retrieve_body( $get_remote );
+				$plugin_commits = count( $mt );
 
-		$html = str_get_html( $get_remote_body );
+				// meta commits
 
-		$mt = $html->find( 'dl[id=results] dt' );
+				$get_remote      = wp_remote_get( 'https://meta.trac.wordpress.org/search?q=props+' . $username . '&noquickjump=1&changeset=on' );
+				$get_remote_body = wp_remote_retrieve_body( $get_remote );
 
-		$meta_commits = count( $mt );
+				$html = str_get_html( $get_remote_body );
 
-		$total_meta_commits = $plugin_commits + $meta_commits;
+				$mt = $html->find( 'dl[id=results] dt' );
 
-		$output .= 'Meta commits: ' . $total_meta_commits;
+				$meta_commits = count( $mt );
 
-		// Core Tickets
-		$output .= '<p><strong>Currently participating in:</strong></p>';
+				$total_meta_commits = $plugin_commits + $meta_commits;
 
-		$get_remote      = wp_remote_get( 'https://core.trac.wordpress.org/my-comments?USER=' . MY_WP_CONTRIBUTIONS_USERNAME );
-		$get_remote_body = wp_remote_retrieve_body( $get_remote );
+				$output .= 'Meta commits: ' . $total_meta_commits;
+			}
 
-		$html = str_get_html( $get_remote_body );
+			$output .= '</p>';
 
-		$mt = $html->find( 'td[class=ticket]' );
-		$mc = $html->find( 'td[class=component]' );
-		$ms = $html->find( 'td[class=summary]' );
+			$output .= $general_title;
 
-		$output .= '<table class="core-tickets">';
-		foreach ( $mt as $i => $t ) {
-			$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
+			if ( 'Yes' === $show_core ) {
+				// core Tickets
+				$output .= $core_commits_title;
+
+				$get_remote      = wp_remote_get( 'https://core.trac.wordpress.org/my-comments?USER=' . $username );
+				$get_remote_body = wp_remote_retrieve_body( $get_remote );
+
+				$html = str_get_html( $get_remote_body );
+
+				$mt = $html->find( 'td[class=ticket]' );
+				$mc = $html->find( 'td[class=component]' );
+				$ms = $html->find( 'td[class=summary]' );
+
+				$output .= '<table class="core-tickets">';
+				foreach ( $mt as $i => $t ) {
+					$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
+				}
+				$output .= '</table>';
+			}
+
+			if ( 'Yes' === $show_meta ) {
+				//	meta Tickets
+				$output .= $meta_commits_title;
+
+				$get_remote      = wp_remote_get( 'https://meta.trac.wordpress.org/report/7?USER=' . $username );
+				$get_remote_body = wp_remote_retrieve_body( $get_remote );
+
+				$html = str_get_html( $get_remote_body );
+
+				$mt = $html->find( 'td[class=ticket]' );
+				$mc = $html->find( 'td[class=component]' );
+				$ms = $html->find( 'td[class=summary]' );
+
+				$output .= '<table class="meta-tickets">';
+
+				foreach ( $mt as $i => $t ) {
+					$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
+				}
+				$output .= '</table>';
+			}
+
+			$output .= $after;
+
+			$output .= '<style>' . $styles . '</style>';
+
+		} else {
+
+			$output = 'Please set your WordPress.org Username in the My WP Contributions settings page.';
+
 		}
-		$output .= '</table>';
-
-		//	Meta Tickets
-		$get_remote      = wp_remote_get( 'https://meta.trac.wordpress.org/report/7?USER=' . MY_WP_CONTRIBUTIONS_USERNAME );
-		$get_remote_body = wp_remote_retrieve_body( $get_remote );
-
-		$html = str_get_html( $get_remote_body );
-
-		$mt = $html->find( 'td[class=ticket]' );
-		$mc = $html->find( 'td[class=component]' );
-		$ms = $html->find( 'td[class=summary]' );
-
-		$output .= '<table class="meta-tickets">';
-
-		foreach ( $mt as $i => $t ) {
-			$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
-		}
-		$output .= '</table>';
 
 		wp_update_post(
 			array(
