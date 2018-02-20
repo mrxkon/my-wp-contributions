@@ -1,8 +1,8 @@
 === My WP Contributions ===
 Contributors: xkon
-Donate link: https://www.paypal.me/xkon
-Tags: stats
-Requires at least: 4.7
+Donate link: https://xkon.gr/#buymeacoffee
+Tags: stats, contributions
+Requires at least: 4.8
 Tested up to: 4.9.4
 Stable tag: 4.9.4
 Requires PHP: 5.3
@@ -27,7 +27,7 @@ PHP Simple HTML DOM Parser | MIT License | http://simplehtmldom.sourceforge.net/
 
 * Unzip the downloaded package
 * Upload `my-wp-contributions` directory to the `/wp-content/plugins/` directory
-* Edit `my-wp-contributions.php` and change your Post ID & wp.org username
+* Edit `my-wp-contributions.php` and change your Post ID & WordPress.org username
 * Activate the plugin through the ‘Plugins’ menu in WordPress
 
 == Screenshots ==

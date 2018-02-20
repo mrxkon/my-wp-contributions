@@ -1,4 +1,4 @@
-### My WP Contributions [![Build Status](https://travis-ci.org/mrxkon/my-wp-contributions.svg?branch=master)](https://travis-ci.org/mrxkon/wp-live-debug) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-F37F40.svg)](http://www.gnu.org/licenses/gpl-2.0.html)
+### My WP Contributions [![Build Status](https://travis-ci.org/mrxkon/my-wp-contributions.svg?branch=master)](https://travis-ci.org/mrxkon/my-wp-contributions) [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-F37F40.svg)](http://www.gnu.org/licenses/gpl-2.0.html)
 
 `PHP: 7.2 / 7.1 / 7.0 / 5.6 / 5.5 / 5.4 / 5.3 -- PHPCS: WordPress Coding Standards`
 
@@ -6,7 +6,7 @@ Requires at least: WordPress 4.8
 
 Tested up to: WordPress 4.9.4
 
-Stable tag: 4.9.4.2
+Stable tag: 4.9.4
 
 Requires PHP: 5.3
 
