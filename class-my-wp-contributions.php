@@ -1,7 +1,7 @@
 <?php
 /**
  * @package My WP Contributions
- * @version 1.0.0
+ * @version 4.9.4
  *
  * Plugin Name:       My WP Contributions
  * Description:       Gathers various stats & contributions from WordPress.org and updates a post daily.
