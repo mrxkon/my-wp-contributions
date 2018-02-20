@@ -30,9 +30,9 @@ script:
     - |
       if [[ "$PHPC_WPC" == "1" ]]; then
         phpcs --config-set installed_paths $SNIFFS_DIR/PHPCompatibility
-        phpcs -p -s -v -n . --standard=PHPCompatibility --extensions=php
+        phpcs -p -s -v -n . --standard=PHPCompatibility --extensions=php --ignore=*/inc/*
         phpcs --config-set installed_paths $SNIFFS_DIR
-        phpcs -p -s -v -n . --standard=WordPress-Core --extensions=php
+        phpcs -p -s -v -n . --standard=WordPress-Core --extensions=php --ignore=*/inc/*
       fi
 notifications:
     email: false
