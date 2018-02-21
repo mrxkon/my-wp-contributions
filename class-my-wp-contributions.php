@@ -20,16 +20,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'We\'re sorry, but you can not directly access this file.' );
 }
 
-/*
- * Change these settings to define your post ID and WordPress.org username.
-*/
-define( 'MY_WP_CONTRIBUTIONS_POST_ID', 8 );
-
-
-/**
- * Do not edit below this line.
- */
-
 class MY_WP_CONTRIBUTIONS {
 	/**
 	 * MY_WP_CONTRIBUTIONS constructor.
@@ -52,14 +42,15 @@ class MY_WP_CONTRIBUTIONS {
 	 * @return void
 	 */
 	public function init() {
-		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
-		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
+
 		add_action( 'admin_menu', array( $this, 'create_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'create_options' ) );
 		add_action( 'my_wp_contributions_event', array( $this, 'my_wp_contributions_show_contributions' ) );
 		add_action( 'wp_footer', array( $this, 'my_wp_contributions_js' ), 100 );
-		register_setting( 'mywpcontributions', 'mywpcontributions_options' );
 		add_action( 'wp_ajax_my_wp_contributions_regenerate', array( $this, 'regenerate' ) );
+		add_action( 'admin_init', array( $this, 'create_wordpress_page' ) );
+		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
+		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
 
 	}
 
@@ -106,12 +97,12 @@ class MY_WP_CONTRIBUTIONS {
 	}
 
 	/**
- * Create Admin menu.
- *
- * @uses add_menu_page()
- *
- * @return void
- */
+	 * Create Admin menu.
+	 *
+	 * @uses add_menu_page()
+	 *
+	 * @return void
+	 */
 	public function create_admin_menu() {
 
 		add_options_page(
@@ -124,11 +115,54 @@ class MY_WP_CONTRIBUTIONS {
 
 	}
 
+	/**
+	 * Create custom page
+	 *
+	 *
+	 * @return void
+	 */
+	public function create_wordpress_page() {
+
+		$slug = 'my-wp-contributions-page';
+
+		$args = array(
+			'post_type'      => 'page',
+			'pagename'       => $slug,
+			'posts_per_page' => 1,
+		);
+
+		$query = new WP_Query( $args );
+
+		if ( ! $query->have_posts() ) {
+			wp_insert_post(
+				array(
+					'comment_status' => 'closed',
+					'ping_status'    => 'closed',
+					'post_author'    => get_current_user_id(),
+					'post_name'      => $slug,
+					'post_title'     => 'Use [my-wp-contributions] shortcode - DO NOT DELETE OR EDIT',
+					'post_content'   => '',
+					'post_status'    => 'private',
+					'post_type'      => 'page',
+				)
+			);
+		}
+
+	}
+
+	/**
+	 * Create options.
+	 *
+	 * @uses add_option()
+	 * @uses register_setting()
+	 *
+	 * @return void
+	 */
 	public function create_options() {
 
-		add_option( 'mywpcontributions_general_title', '<p><strong>Currently participating in:</strong></p>' );
-		add_option( 'mywpcontributions_core_commits_title', '<p>Core Commits:</p>' );
-		add_option( 'mywpcontributions_meta_commits_title', '<p>Meta Commits:</p>' );
+		add_option( 'mywpcontributions_general_title', 'Currently participating in:' );
+		add_option( 'mywpcontributions_core_commits_title', 'Core Commits:' );
+		add_option( 'mywpcontributions_meta_commits_title', 'Meta Commits:' );
 		add_option( 'mywpcontributions_show_core', 'Yes' );
 		add_option( 'mywpcontributions_show_meta', 'Yes' );
 
@@ -265,15 +299,15 @@ class MY_WP_CONTRIBUTIONS {
 					<tr>
 						<td>
 							<h3>WordPress.org Username</h3>
-							<input type="text" id="mywpcontributions_username" name="mywpcontributions_username" value="<?php echo get_option( 'mywpcontributions_username' ); ?>" />
+							<input type="text" id="mywpcontributions_username" name="mywpcontributions_username" value="<?php echo esc_attr( get_option( 'mywpcontributions_username' ) ); ?>" />
 							<h3>General Title (html)</h3>
-							<input type="text" id="mywpcontributions_general_title" name="mywpcontributions_general_title" value="<?php echo get_option( 'mywpcontributions_general_title' ); ?>" />
+							<input type="text" id="mywpcontributions_general_title" name="mywpcontributions_general_title" value="<?php echo esc_attr( get_option( 'mywpcontributions_general_title' ) ); ?>" />
 						</td>
 						<td>
 							<h3>Core Commits Title (html)</h3>
-							<input type="text" id="mywpcontributions_core_commits_title" name="mywpcontributions_core_commits_title" value="<?php echo get_option( 'mywpcontributions_core_commits_title' ); ?>" />
+							<input type="text" id="mywpcontributions_core_commits_title" name="mywpcontributions_core_commits_title" value="<?php echo esc_attr( get_option( 'mywpcontributions_core_commits_title' ) ); ?>" />
 							<h3>Meta Commits Title (html)</h3>
-							<input type="text" id="mywpcontributions_meta_commits_title" name="mywpcontributions_meta_commits_title" value="<?php echo get_option( 'mywpcontributions_meta_commits_title' ); ?>" />
+							<input type="text" id="mywpcontributions_meta_commits_title" name="mywpcontributions_meta_commits_title" value="<?php echo esc_attr( get_option( 'mywpcontributions_meta_commits_title' ) ); ?>" />
 							</td>
 						<td>
 							<h3>Show Core Commits</h3>
@@ -301,19 +335,19 @@ class MY_WP_CONTRIBUTIONS {
 					<tr>
 						<td colspan="3">
 							<h3>Before output (html)</h3>
-							<textarea style="width: 100%;height:200px;" id="mywpcontributions_before" name="mywpcontributions_before"><?php echo get_option( 'mywpcontributions_before' ); ?></textarea>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_before" name="mywpcontributions_before"><?php echo esc_textarea( get_option( 'mywpcontributions_before' ) ); ?></textarea>
 						</td>
 					</tr>
 					<tr>
 						<td colspan="3">
 							<h3>After output (html)</h3>
-							<textarea style="width: 100%;height:200px;" id="mywpcontributions_after" name="mywpcontributions_after"><?php echo get_option( 'mywpcontributions_after' ); ?></textarea>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_after" name="mywpcontributions_after"><?php echo esc_textarea( get_option( 'mywpcontributions_after' ) ); ?></textarea>
 						</td>
 					</tr>
 					<tr>
 						<td colspan="3">
 							<h3>Extra CSS rules (mark everything with !important)</h3>
-							<textarea style="width: 100%;height:200px;" id="mywpcontributions_styles" name="mywpcontributions_styles"><?php echo get_option( 'mywpcontributions_styles' ); ?></textarea>
+							<textarea style="width: 100%;height:200px;" id="mywpcontributions_styles" name="mywpcontributions_styles"><?php echo esc_textarea( get_option( 'mywpcontributions_styles' ) ); ?></textarea>
 						</td>
 					</tr>
 					<tr>
@@ -372,6 +406,8 @@ class MY_WP_CONTRIBUTIONS {
 	 * @return void
 	 */
 	public function my_wp_contributions_show_contributions() {
+		$page               = get_page_by_path( 'my-wp-contributions-page' );
+		$page_id            = $page->ID;
 		$username           = get_option( 'mywpcontributions_username' );
 		$before             = get_option( 'mywpcontributions_before' );
 		$after              = get_option( 'mywpcontributions_after' );
@@ -382,7 +418,7 @@ class MY_WP_CONTRIBUTIONS {
 		$show_core          = get_option( 'mywpcontributions_show_core' );
 		$show_meta          = get_option( 'mywpcontributions_show_meta' );
 
-		if ( ! empty( $username ) ) {
+		if ( ! empty( $username ) && ! empty( $page_id ) ) {
 
 			require_once( dirname( __FILE__ ) . '/inc/simple_html_dom.php' );
 
@@ -502,7 +538,7 @@ class MY_WP_CONTRIBUTIONS {
 
 		wp_update_post(
 			array(
-				'ID'           => MY_WP_CONTRIBUTIONS_POST_ID,
+				'ID'           => $page_id,
 				'post_content' => $output,
 			)
 		);
@@ -517,8 +553,10 @@ class MY_WP_CONTRIBUTIONS {
 	 * @return void
 	 */
 	public function my_wp_contributions_js() {
-
-		if ( is_page( MY_WP_CONTRIBUTIONS_POST_ID ) ) {
+		// TODO: find a way to do this with the shortcode
+		$page    = get_page_by_path( 'my-wp-contributions-page' );
+		$page_id = $page->ID;
+		if ( is_page( $page_id ) ) {
 			?>
 			<script>
 					(function( $ ) {
