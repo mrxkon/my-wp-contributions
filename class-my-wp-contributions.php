@@ -46,9 +46,8 @@ class MY_WP_CONTRIBUTIONS {
 		add_action( 'admin_menu', array( $this, 'create_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'create_options' ) );
 		add_action( 'my_wp_contributions_event', array( $this, 'my_wp_contributions_show_contributions' ) );
-		add_action( 'wp_footer', array( $this, 'my_wp_contributions_js' ), 100 );
 		add_action( 'wp_ajax_my_wp_contributions_regenerate', array( $this, 'regenerate' ) );
-		add_action( 'admin_init', array( $this, 'create_wordpress_page' ) );
+		register_activation_hook( __FILE__, array( $this, 'create_wordpress_page' ) );
 		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
 		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
 
@@ -118,8 +117,11 @@ class MY_WP_CONTRIBUTIONS {
 	/**
 	 * Create custom page
 	 *
+	 * @uses WP_Query()
+	 * @uses wp_insert_post()
+	 * @uses get_page_by_path()
 	 *
-	 * @return void
+	 * @return int $result The post ID
 	 */
 	public function create_wordpress_page() {
 
@@ -134,7 +136,7 @@ class MY_WP_CONTRIBUTIONS {
 		$query = new WP_Query( $args );
 
 		if ( ! $query->have_posts() ) {
-			wp_insert_post(
+			$result = wp_insert_post(
 				array(
 					'comment_status' => 'closed',
 					'ping_status'    => 'closed',
@@ -146,8 +148,13 @@ class MY_WP_CONTRIBUTIONS {
 					'post_type'      => 'page',
 				)
 			);
+		} else {
+			$page   = get_page_by_path( 'my-wp-contributions-page' );
+			$result = $page->ID;
 		}
 
+
+		return $result;
 	}
 
 	/**
@@ -500,7 +507,9 @@ class MY_WP_CONTRIBUTIONS {
 
 				$output .= '<table class="core-tickets">';
 				foreach ( $mt as $i => $t ) {
-					$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
+					$id      = str_replace( 'href="/ticket', 'target="_blank" rel="noopener" href="https://core.trac.wordpress.org/ticket', $t );
+					$title   = str_replace( 'href="/ticket', 'target="_blank" rel="noopener" href="https://core.trac.wordpress.org/ticket', $ms[ $i ] );
+					$output .= '<tr>' . $mc[ $i ] . $id . $title . '</tr>';
 				}
 				$output .= '</table>';
 			}
@@ -521,7 +530,9 @@ class MY_WP_CONTRIBUTIONS {
 				$output .= '<table class="meta-tickets">';
 
 				foreach ( $mt as $i => $t ) {
-					$output .= '<tr>' . $mc[ $i ] . $t . $ms[ $i ] . '</tr>';
+					$id      = str_replace( 'href="/ticket', 'target="_blank" rel="noopener" href="https://meta.trac.wordpress.org/ticket', $t );
+					$title   = str_replace( 'href="/ticket', 'target="_blank" rel="noopener" href="https://meta.trac.wordpress.org/ticket', $ms[ $i ] );
+					$output .= '<tr>' . $mc[ $i ] . $id . $title . '</tr>';
 				}
 				$output .= '</table>';
 			}
@@ -542,54 +553,6 @@ class MY_WP_CONTRIBUTIONS {
 				'post_content' => $output,
 			)
 		);
-
-	}
-
-	/**
-	 * Add custom JS to output page.
-	 *
-	 * @uses is_page()
-	 *
-	 * @return void
-	 */
-	public function my_wp_contributions_js() {
-		// TODO: find a way to do this with the shortcode
-		$page    = get_page_by_path( 'my-wp-contributions-page' );
-		$page_id = $page->ID;
-		if ( is_page( $page_id ) ) {
-			?>
-			<script>
-					(function( $ ) {
-						$( document ).ready( function(){
-
-							$( 'a[href*="ticket"]' ).each(function() {
-
-								if ($(this).parent().parent().parent().parent().hasClass('core-tickets')) {
-
-									var newRef = 'https://core.trac.wordpress.org' + $( this ).attr( 'href' );
-
-									$( this ).attr( 'href', newRef );
-									$( this ).attr('target','_blank');
-									$( this ).attr('rel','noopener');
-
-								} else if ( $( this ).parent().parent().parent().parent().hasClass( 'meta-tickets' ) ) {
-
-									var newRef = 'https://meta.trac.wordpress.org' + $(this).attr( 'href' );
-
-									$( this ).attr( 'href', newRef);
-									$( this ).attr('target','_blank');
-									$( this ).attr('rel','noopener');
-
-								}
-
-							} );
-
-						} );
-
-					})( jQuery )
-			</script>
-			<?php
-		}
 
 	}
 
