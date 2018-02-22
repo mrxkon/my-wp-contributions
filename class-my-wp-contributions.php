@@ -15,6 +15,8 @@
  *
  */
 
+ // TODO: create shortcode
+
 // Check that the file is not accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'We\'re sorry, but you can not directly access this file.' );
@@ -121,6 +123,7 @@ class MY_WP_CONTRIBUTIONS {
 	 * @uses WP_Query()
 	 * @uses wp_insert_post()
 	 * @uses get_page_by_path()
+	 * @uses wp_reset_postdata()
 	 *
 	 * @return int $result The post ID
 	 */
@@ -154,6 +157,7 @@ class MY_WP_CONTRIBUTIONS {
 			$result = $page->ID;
 		}
 
+		wp_reset_postdata();
 
 		return $result;
 	}
