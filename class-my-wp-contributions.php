@@ -46,13 +46,14 @@ class MY_WP_CONTRIBUTIONS {
 	 */
 	public function init() {
 
+		register_activation_hook( __FILE__, array( $this, 'create_wordpress_page' ) );
+		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
+		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
 		add_action( 'admin_menu', array( $this, 'create_admin_menu' ) );
 		add_action( 'admin_init', array( $this, 'create_options' ) );
 		add_action( 'my_wp_contributions_event', array( $this, 'my_wp_contributions_show_contributions' ) );
 		add_action( 'wp_ajax_my_wp_contributions_regenerate', array( $this, 'regenerate' ) );
-		register_activation_hook( __FILE__, array( $this, 'create_wordpress_page' ) );
-		register_activation_hook( __FILE__, array( $this, 'my_wp_contributions_activation' ) );
-		register_deactivation_hook( __FILE__, array( $this, 'my_wp_contributions_deactivation' ) );
+		add_shortcode( 'my-wp-contributions', array( $this, 'create_shortcode' ) );
 
 	}
 
@@ -558,6 +559,22 @@ class MY_WP_CONTRIBUTIONS {
 				'post_content' => $output,
 			)
 		);
+
+	}
+
+	/**
+	 * [my-wp-contribution] shortcode
+	 *
+	 * @uses get_page_by_path()
+	 *
+	 * @return string $content custom post content
+	 */
+	public function create_shortcode() {
+
+		$page    = get_page_by_path( 'my-wp-contributions-page' );
+		$content = $page->post_content;
+
+		return $content;
 
 	}
 
