@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class MY_WP_CONTRIBUTIONS {
+
 	/**
 	 * MY_WP_CONTRIBUTIONS constructor.
 	 *
@@ -433,7 +434,7 @@ class MY_WP_CONTRIBUTIONS {
 
 			$output .= '<p class="general-info">';
 
-			$output .= 'WordPress.org Username: <a href="https://profiles.wordpress.org/' . $username . '">' . $username . '</a><br/>';
+			$output .= 'WordPress.org Username: <a target="_blank" rel="noopener" href="https://profiles.wordpress.org/' . $username . '">' . $username . '</a><br/>';
 
 			// General
 
