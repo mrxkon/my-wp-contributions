@@ -459,9 +459,11 @@ class MY_WP_CONTRIBUTIONS {
 
 				$html = str_get_html( $get_remote_body );
 
-				$mt = $html->find( 'dl[id=results] dt' );
+				$mt = $html->find( 'span[class=numresults]' );
 
-				$output .= 'Core commits: ' . count( $mt ) . '<br>';
+				$string = explode( ' ', $mt[0]->innertext );
+
+				$output .= 'Core commits: ' . rtrim( $string[4], ')' ) . '<br>';
 			}
 
 			if ( 'Yes' === $show_meta ) {
@@ -472,9 +474,11 @@ class MY_WP_CONTRIBUTIONS {
 
 				$html = str_get_html( $get_remote_body );
 
-				$mt = $html->find( 'dl[id=results] dt' );
+				$mt = $html->find( 'span[class=numresults]' );
 
-				$plugin_commits = count( $mt );
+				$string = explode( ' ', $mt[0]->innertext );
+
+				$plugin_commits = (int) rtrim( $string[4], ')' );
 
 				// meta commits
 
@@ -483,9 +487,11 @@ class MY_WP_CONTRIBUTIONS {
 
 				$html = str_get_html( $get_remote_body );
 
-				$mt = $html->find( 'dl[id=results] dt' );
+				$mt = $html->find( 'span[class=numresults]' );
 
-				$meta_commits = count( $mt );
+				$string = explode( ' ', $mt[0]->innertext );
+
+				$meta_commits = (int) rtrim( $string[4], ')' );
 
 				$total_meta_commits = $plugin_commits + $meta_commits;
 
